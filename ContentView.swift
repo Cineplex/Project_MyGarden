@@ -14,3 +14,7 @@ struct ContentView: View {
         }
     }
 }
+
+#Proview {
+    ContentView()
+}
