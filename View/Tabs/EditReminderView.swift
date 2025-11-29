@@ -16,6 +16,9 @@ struct EditReminderView: View {
     @State private var errorMessage: String?
     @State private var showDeleteAlert = false
     
+    private let navBarColor = Color(red: 0x95 / 255.0, green: 0xB1 / 255.0, blue: 0x5D / 255.0)
+    private let backgroundColor = Color(red: 0.956, green: 0.949, blue: 0.922)
+    
     // วันในสัปดาห์
     private let daysOfWeek = [
         (1, "อาทิตย์"),
@@ -114,6 +117,8 @@ struct EditReminderView: View {
                         .padding(.horizontal)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(backgroundColor)
             .navigationTitle("แก้ไขการแจ้งเตือน")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -129,6 +134,9 @@ struct EditReminderView: View {
                     .disabled(selectedPlantId == nil || selectedDays.isEmpty)
                 }
             }
+            .toolbarBackground(navBarColor, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .alert("ยืนยันการลบ", isPresented: $showDeleteAlert) {
                 Button("ยกเลิก", role: .cancel) { }
                 Button("ลบ", role: .destructive) {

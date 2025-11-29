@@ -1,21 +1,29 @@
 import SwiftUI
-import LocalAuthentication
 import PhotosUI
 
 struct ProfileView: View {
     @ObservedObject var authViewModel: AuthViewModel
-    @State private var biometricEnabled = false
-    @State private var authMessage = ""
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var profileImage: UIImage?
     @State private var editingUsername = false
     @State private var tempUsername = ""
     @State private var usernameError: String?
     
+    private let themeGreen = Color(red: 42/255, green: 111/255, blue: 54/255)
+    private let backgroundColor = Color(red: 0.956, green: 0.949, blue: 0.922)
+    private var backgroundGradient: LinearGradient {
+        LinearGradient(
+            gradient: Gradient(colors: [backgroundColor, .white]),
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+    private let navBarColor = Color(red: 0x95 / 255.0, green: 0xB1 / 255.0, blue: 0x5D / 255.0)
+    
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 5) {
                 if let user = authViewModel.currentUser {
                     // รูปโปรไฟล์
                     ZStack {
@@ -37,14 +45,15 @@ struct ProfileView: View {
                     .clipShape(Circle())
                     .overlay(
                         Circle()
-                            .stroke(Color.gray.opacity(0.3), lineWidth: 2)
+                            .stroke(themeGreen, lineWidth: 3)
                     )
+                    .padding(.top, 20)
                     
                     // ปุ่มเปลี่ยนรูปโปรไฟล์
                     PhotosPicker(selection: $selectedPhoto, matching: .images) {
                         Text("เปลี่ยนรูปโปรไฟล์")
                             .font(.subheadline)
-                            .foregroundColor(.blue)
+                            .foregroundColor(themeGreen)
                     }
                     .onChange(of: selectedPhoto) { newItem in
                         Task {
@@ -59,25 +68,26 @@ struct ProfileView: View {
                     }
                     
                     // ชื่อผู้ใช้ (แก้ไขได้)
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("ชื่อผู้ใช้")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                            Spacer()
-                        }
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("ชื่อผู้ใช้")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
                         
                         HStack {
                             if editingUsername {
                                 TextField("ชื่อผู้ใช้", text: $tempUsername)
                                     .textFieldStyle(.roundedBorder)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 5)
+                                            .stroke(themeGreen, lineWidth: 2)
+                                    )
                                     .onSubmit {
                                         saveUsername()
                                     }
                                 
                                 Button(action: saveUsername) {
                                     Image(systemName: "checkmark.circle.fill")
-                                        .foregroundColor(.green)
+                                        .foregroundColor(themeGreen)
                                         .font(.title3)
                                 }
                                 
@@ -90,8 +100,14 @@ struct ProfileView: View {
                                 Text(user.username)
                                     .font(.body)
                                     .foregroundColor(.primary)
-                                
-                                Spacer()
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 8)
+                                    .background(Color.white)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 5)
+                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                    )
                                 
                                 Button(action: {
                                     tempUsername = user.username
@@ -99,7 +115,7 @@ struct ProfileView: View {
                                     usernameError = nil
                                 }) {
                                     Image(systemName: "pencil")
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(themeGreen)
                                         .font(.subheadline)
                                 }
                             }
@@ -114,89 +130,60 @@ struct ProfileView: View {
                     .padding(.horizontal)
                     
                     // อีเมล (แสดงอย่างเดียว)
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("อีเมล")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                            Spacer()
-                        }
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("อีเมล")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
                         
                         Text(user.email)
                             .font(.body)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.primary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 8)
+                            .background(Color.white)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 5)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                            )
                     }
                     .padding(.horizontal)
                     
-                    // Face/Touch ID
-                    if authViewModel.isBiometricAvailable() {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text("Face ID / Touch ID")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                                
-                                Toggle("", isOn: $biometricEnabled)
-                                    .onChange(of: biometricEnabled) { newValue in
-                                        authViewModel.setBiometricEnabled(newValue, for: user.email)
-                                    }
-                            }
-                            
-                            Text("เปิดใช้งานเพื่อยืนยันตัวตนด้วย Face ID หรือ Touch ID เมื่อเข้าสู่ระบบ")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.horizontal)
-                    }
-                    
-                    // ปุ่มเปลี่ยนรหัสผ่าน
-                    NavigationLink(destination: ChangePasswordView(authViewModel: authViewModel)) {
-                        HStack {
-                            Text("เปลี่ยนรหัสผ่าน")
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .buttonStyle(.bordered)
-                    .padding(.horizontal)
-                    
+                    // ปุ่มออกจากระบบ
                     Button("ออกจากระบบ") {
                         authViewModel.logout()
                     }
                     .buttonStyle(.borderedProminent)
-                    .foregroundColor(.red)
-                    
-                    // ปุ่มลบบัญชี
-                    NavigationLink(destination: DeleteAccountView(authViewModel: authViewModel)) {
-                        Text("ลบบัญชี")
-                            .foregroundColor(.red)
-                    }
-                    .buttonStyle(.bordered)
-                    .padding(.top, 10)
+                    .tint(.red)
+                    .foregroundColor(.white)
+                    .padding(.top, 20)
                 } else {
                     Text("ยังไม่ได้เข้าสู่ระบบ")
                 }
                 }
                 .padding()
             }
+            .background(backgroundGradient)
             .navigationTitle("Profile")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink(destination: SettingView(authViewModel: authViewModel)) {
+                        Image(systemName: "gearshape.fill")
+                            .foregroundColor(.white)
+                    }
+                }
+            }
+            .toolbarBackground(navBarColor, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .onAppear {
                 loadProfileImage()
-                if let user = authViewModel.currentUser {
-                    biometricEnabled = authViewModel.isBiometricEnabled(for: user.email)
-                }
             }
             .onChange(of: authViewModel.currentUser?.id) { _ in
                 loadProfileImage()
                 editingUsername = false
                 tempUsername = ""
                 usernameError = nil
-                if let user = authViewModel.currentUser {
-                    biometricEnabled = authViewModel.isBiometricEnabled(for: user.email)
-                }
             }
         }
     }

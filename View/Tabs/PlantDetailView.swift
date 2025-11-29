@@ -10,6 +10,9 @@ struct PlantDetailView: View {
     @State private var showEditPlant = false
     @State private var showDeleteAlert = false
     
+    private let navBarColor = Color(red: 0x95 / 255.0, green: 0xB1 / 255.0, blue: 0x5D / 255.0)
+    private let backgroundColor = Color(red: 0.956, green: 0.949, blue: 0.922)
+    
     // ดึงข้อมูลต้นไม้ล่าสุดจาก ViewModel
     private var currentPlant: Plant? {
         plantViewModel.plants.first { $0.id == plant.id }
@@ -74,28 +77,29 @@ struct PlantDetailView: View {
                 Button(action: {
                     showEditPlant = true
                 }) {
-                    HStack {
-                        Spacer()
-                        Text("แก้ไข")
-                            .foregroundColor(.blue)
-                        Spacer()
-                    }
+                    Text("แก้ไข")
+                        .foregroundColor(.blue)
+                        .frame(maxWidth: .infinity, alignment: .center)
                 }
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                 
                 Button(action: {
                     showDeleteAlert = true
                 }) {
-                    HStack {
-                        Spacer()
-                        Text("ลบ")
-                            .foregroundColor(.red)
-                        Spacer()
-                    }
+                    Text("ลบ")
+                        .foregroundColor(.red)
+                        .frame(maxWidth: .infinity, alignment: .center)
                 }
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
             }
         }
         .navigationTitle("รายละเอียดต้นไม้")
         .navigationBarTitleDisplayMode(.inline)
+        .scrollContentBackground(.hidden)
+        .background(backgroundColor)
+        .toolbarBackground(navBarColor, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .sheet(isPresented: $showEditPlant) {
             if let currentPlant = currentPlant {
                 EditPlantView(plantViewModel: plantViewModel, plant: currentPlant)

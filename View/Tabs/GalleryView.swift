@@ -22,6 +22,17 @@ struct GalleryView: View {
     @State private var itemsToDelete: [GalleryItem] = []
     @State private var selectedFilter: GalleryFilter = .all
     
+    private let backgroundColor = Color(red: 0.956, green: 0.949, blue: 0.922)
+    private var backgroundGradient: LinearGradient {
+        LinearGradient(
+            gradient: Gradient(colors: [backgroundColor, .white]),
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+    private let themeGreen = Color(red: 42/255, green: 111/255, blue: 54/255)
+    private let navBarColor = Color(red: 0x95 / 255.0, green: 0xB1 / 255.0, blue: 0x5D / 255.0)
+    
     var userGalleryItems: [GalleryItem] {
         guard let userId = authViewModel.currentUser?.id else { return [] }
         return galleryViewModel.getGalleryItems(for: userId)
@@ -169,62 +180,26 @@ struct GalleryView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                // Segmented Control
-                if !userGalleryItems.isEmpty {
-                    Picker("ประเภท", selection: $selectedFilter) {
-                        ForEach(GalleryFilter.allCases, id: \.self) { filter in
-                            Text(filter.rawValue).tag(filter)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                }
-                
-                if userGalleryItems.isEmpty {
-                    VStack(spacing: 20) {
-                        Spacer()
-                        Image(systemName: "photo.on.rectangle")
-                            .font(.system(size: 60))
-                            .foregroundColor(.gray)
-                        Text("ยังไม่มีรูปภาพหรือวิดีโอ")
-                            .font(.title2)
-                            .foregroundColor(.secondary)
-                        Text("กดปุ่ม + เพื่อเพิ่มรูปภาพหรือวิดีโอ")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                    }
-                } else if filteredItems.isEmpty {
-                    emptyStateView
-                } else {
-                    GeometryReader { geometry in
-                        ScrollView {
-                            LazyVGrid(columns: columns, spacing: 2) {
-                                ForEach(filteredItems) { item in
-                                    galleryItemView(
-                                        item: item,
-                                        geometry: geometry,
-                                        isSelectionMode: isSelectionMode
-                                    )
-                                }
-                            }
-                            .padding(.horizontal, 2)
-                            .padding(.vertical, 8)
-                        }
-                    }
-                }
+                filterPicker
+                galleryContent
             }
+            .padding(.top, 8)
+            .background(backgroundGradient)
             .navigationTitle(navigationTitle)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     leadingToolbarItem
+                        .tint(.white)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     trailingToolbarItem
+                        .tint(.white)
                 }
             }
+            .toolbarBackground(navBarColor, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .alert("ยืนยันการลบ", isPresented: $showDeleteAlert) {
                 deleteAlertButtons
             } message: {
@@ -251,6 +226,70 @@ struct GalleryView: View {
             .onChange(of: selectedVideoPickerItems) { newItems in
                 handleVideoSelection(newItems)
             }
+        }
+    }
+
+    @ViewBuilder
+    private var filterPicker: some View {
+        if !userGalleryItems.isEmpty {
+            Picker("ประเภท", selection: $selectedFilter) {
+                ForEach(GalleryFilter.allCases, id: \.self) { filter in
+                    Text(filter.rawValue).tag(filter)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+        }
+    }
+
+    @ViewBuilder
+    private var galleryContent: some View {
+        if userGalleryItems.isEmpty {
+            emptyGalleryView
+        } else if filteredItems.isEmpty {
+            emptyStateView
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(backgroundGradient)
+        } else {
+            galleryGrid
+        }
+    }
+
+    private var emptyGalleryView: some View {
+        VStack(spacing: 20) {
+            Spacer()
+            Image(systemName: "photo.on.rectangle")
+                .font(.system(size: 60))
+                .foregroundColor(.gray)
+            Text("ยังไม่มีรูปภาพหรือวิดีโอ")
+                .font(.title2)
+                .foregroundColor(.secondary)
+            Text("กดปุ่ม + เพื่อเพิ่มรูปภาพหรือวิดีโอ")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(backgroundGradient)
+    }
+
+    private var galleryGrid: some View {
+        GeometryReader { geometry in
+            ScrollView {
+                LazyVGrid(columns: columns, spacing: 2) {
+                    ForEach(filteredItems) { item in
+                        galleryItemView(
+                            item: item,
+                            geometry: geometry,
+                            isSelectionMode: isSelectionMode
+                        )
+                    }
+                }
+                .padding(.horizontal, 2)
+                .padding(.vertical, 8)
+            }
+            .background(backgroundGradient)
         }
     }
     
@@ -414,7 +453,7 @@ struct GalleryThumbnailView: View {
                     HStack {
                         Spacer()
                         Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                            .foregroundColor(isSelected ? .blue : .white)
+                            .foregroundColor(isSelected ? Color(red: 42/255, green: 111/255, blue: 54/255) : .white)
                             .font(.system(size: 24))
                             .padding(8)
                             .background(

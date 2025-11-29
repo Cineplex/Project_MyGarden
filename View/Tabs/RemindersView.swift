@@ -8,6 +8,16 @@ struct RemindersView: View {
     
     @State private var showCreateReminder = false
     
+    private let navBarColor = Color(red: 0x95 / 255.0, green: 0xB1 / 255.0, blue: 0x5D / 255.0)
+    private let backgroundColor = Color(red: 0.956, green: 0.949, blue: 0.922)
+    private var backgroundGradient: LinearGradient {
+        LinearGradient(
+            gradient: Gradient(colors: [backgroundColor, .white]),
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+    
     var userReminders: [Reminder] {
         guard let userId = authViewModel.currentUser?.id else { return [] }
         // แสดง reminders ทั้งหมด (ไม่กรองตาม title)
@@ -21,50 +31,56 @@ struct RemindersView: View {
     
     var body: some View {
         NavigationView {
-            VStack {
-                if userPlants.isEmpty {
-                    VStack(spacing: 20) {
-                        Spacer()
-                        Image(systemName: "leaf")
-                            .font(.system(size: 60))
-                            .foregroundColor(.gray)
-                        Text("ยังไม่มีต้นไม้")
-                            .font(.title2)
-                            .foregroundColor(.secondary)
-                        Text("กรุณาสร้างต้นไม้ก่อนเพิ่มการแจ้งเตือน")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                        Spacer()
-                    }
-                    .padding()
-                } else if userReminders.isEmpty {
-                    VStack(spacing: 20) {
-                        Spacer()
-                        Image(systemName: "alarm")
-                            .font(.system(size: 60))
-                            .foregroundColor(.gray)
-                        Text("ขณะนี้ยังไม่มี")
-                            .font(.title2)
-                            .foregroundColor(.secondary)
-                        Text("กดปุ่ม + เพื่อเพิ่มการแจ้งเตือน")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                    }
-                    .padding()
-                } else {
-                    List {
-                        ForEach(userReminders) { reminder in
-                            ReminderRowView(
-                                reminder: reminder,
-                                reminderViewModel: reminderViewModel,
-                                plantViewModel: plantViewModel,
-                                userPlants: userPlants
-                            )
+            ZStack {
+                backgroundGradient
+                    .ignoresSafeArea()
+                
+                VStack {
+                    if userPlants.isEmpty {
+                        VStack(spacing: 20) {
+                            Spacer()
+                            Image(systemName: "leaf")
+                                .font(.system(size: 60))
+                                .foregroundColor(.gray)
+                            Text("ยังไม่มีต้นไม้สำหรับสร้างการแจ้งเตือน")
+                                .font(.title2)
+                                .foregroundColor(.secondary)
+                            Text("กรุณาสร้างต้นไม้ก่อนเพิ่มการแจ้งเตือน")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                            Spacer()
                         }
-                        .onDelete { indexSet in
-                            deleteReminders(at: indexSet)
+                        .padding()
+                    } else if userReminders.isEmpty {
+                        VStack(spacing: 20) {
+                            Spacer()
+                            Image(systemName: "alarm")
+                                .font(.system(size: 60))
+                                .foregroundColor(.gray)
+                            Text("ขณะนี้ยังไม่มี")
+                                .font(.title2)
+                                .foregroundColor(.secondary)
+                            Text("กดปุ่ม + เพื่อเพิ่มการแจ้งเตือน")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                        }
+                        .padding()
+                    } else {
+                        ScrollView {
+                            LazyVStack(spacing: 16) {
+                                ForEach(userReminders) { reminder in
+                                    ReminderRowView(
+                                        reminder: reminder,
+                                        reminderViewModel: reminderViewModel,
+                                        plantViewModel: plantViewModel,
+                                        userPlants: userPlants
+                                    )
+                                }
+                            }
+                            .padding(.horizontal)
+                            .padding(.vertical, 20)
                         }
                     }
                 }
@@ -77,9 +93,13 @@ struct RemindersView: View {
                     }) {
                         Image(systemName: "plus")
                     }
+                    .tint(.white)
                     .disabled(userPlants.isEmpty)
                 }
             }
+            .toolbarBackground(navBarColor, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .sheet(isPresented: $showCreateReminder) {
                 if let userId = authViewModel.currentUser?.id {
                     CreateReminderView(
@@ -93,13 +113,6 @@ struct RemindersView: View {
         }
     }
     
-    private func deleteReminders(at offsets: IndexSet) {
-        guard let userId = authViewModel.currentUser?.id else { return }
-        let reminders = reminderViewModel.getReminders(for: userId)
-        for index in offsets {
-            reminderViewModel.deleteReminder(reminders[index])
-        }
-    }
 }
 
 // View สำหรับแสดงแต่ละการแจ้งเตือน
@@ -140,8 +153,8 @@ struct ReminderRowView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 4) {
                     if let title = displayReminder.title, !title.isEmpty {
                         Text(title)
@@ -161,26 +174,23 @@ struct ReminderRowView: View {
                         reminderViewModel.toggleReminder(displayReminder)
                     }
                 ))
+                .labelsHidden()
+                .frame(maxHeight: .infinity, alignment: .center)
                 .onTapGesture { }
             }
             
-            HStack {
+            HStack(spacing: 8) {
                 Image(systemName: "clock")
                     .foregroundColor(.secondary)
-                Text(formattedTime)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            
-            HStack {
-                Image(systemName: "calendar")
-                    .foregroundColor(.secondary)
-                Text(formattedDays)
+                Text("\(formattedTime) · \(formattedDays)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
         }
-        .padding(.vertical, 4)
+        .padding()
+        .background(Color.white.opacity(0.9))
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .shadow(color: Color.black.opacity(0.07), radius: 8, y: 4)
         .contentShape(Rectangle())
         .onTapGesture {
             if let currentReminder = currentReminder {

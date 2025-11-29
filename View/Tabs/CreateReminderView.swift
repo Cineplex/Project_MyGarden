@@ -13,6 +13,8 @@ struct CreateReminderView: View {
     @State private var selectedTime = Date()
     @State private var selectedDays: Set<Int> = []
     @State private var errorMessage: String?
+    private let navBarColor = Color(red: 0x95 / 255.0, green: 0xB1 / 255.0, blue: 0x5D / 255.0)
+    private let backgroundColor = Color(red: 0.956, green: 0.949, blue: 0.922)
     
     // วันในสัปดาห์
     private let daysOfWeek = [
@@ -81,6 +83,8 @@ struct CreateReminderView: View {
                         .padding(.horizontal)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(backgroundColor)
             .navigationTitle("เพิ่มการแจ้งเตือน")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -96,6 +100,9 @@ struct CreateReminderView: View {
                     .disabled(selectedPlantId == nil || selectedDays.isEmpty)
                 }
             }
+            .toolbarBackground(navBarColor, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
         }
     }
     

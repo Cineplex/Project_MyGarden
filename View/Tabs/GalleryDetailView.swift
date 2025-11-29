@@ -9,61 +9,20 @@ struct GalleryDetailView: View {
     @State private var showDeleteConfirmation = false
     @Environment(\.dismiss) var dismiss
     
+    private let backgroundColor = Color(red: 0.956, green: 0.949, blue: 0.922)
+    private let themeGreen = Color(red: 42/255, green: 111/255, blue: 54/255)
+    private let navBarColor = Color(red: 0x95 / 255.0, green: 0xB1 / 255.0, blue: 0x5D / 255.0)
+    
     var body: some View {
-        VStack(spacing: 20) {
-            // แสดงรูปภาพหรือวิดีโอ
-            if item.mediaType == .photo {
-                if let image = galleryViewModel.loadImage(from: item) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .onTapGesture {
-                            showFullScreen = true
-                        }
-                } else {
-                    Text("ไม่สามารถโหลดรูปภาพได้")
-                        .foregroundColor(.secondary)
-                }
-            } else {
-                if let videoURL = galleryViewModel.loadVideoURL(from: item) {
-                    Group {
-                        if let player = player {
-                            VideoPlayer(player: player)
-                                .frame(height: 300)
-                                .onTapGesture {
-                                    showFullScreen = true
-                                }
-                        } else {
-                            ProgressView()
-                                .frame(height: 300)
-                        }
-                    }
-                    .onAppear {
-                        if player == nil {
-                            player = AVPlayer(url: videoURL)
-                        }
-                    }
-                } else {
-                    Text("ไม่สามารถโหลดวิดีโอได้")
-                        .foregroundColor(.secondary)
-                }
+        ScrollView {
+            VStack(spacing: 20) {
+                mediaSection
+                creationDateSection
             }
-            
-            // แสดงวันที่และเวลาสร้าง
-            VStack(alignment: .leading, spacing: 8) {
-                Text("วันที่สร้าง")
-                    .font(.headline)
-                
-                Text(formatDateTime(item.createdAt))
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
-            
-            Spacer()
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .background(backgroundColor)
         .navigationTitle("รายละเอียด")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -75,6 +34,9 @@ struct GalleryDetailView: View {
                 }
             }
         }
+        .toolbarBackground(navBarColor, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .confirmationDialog("ยืนยันการลบ", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
             Button("ลบ", role: .destructive) {
                 galleryViewModel.deleteGalleryItem(item)
@@ -97,6 +59,64 @@ struct GalleryDetailView: View {
             player?.pause()
             player = nil
         }
+    }
+    
+    @ViewBuilder
+    private var mediaSection: some View {
+        if item.mediaType == .photo {
+            if let image = galleryViewModel.loadImage(from: item) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity, alignment: .top)
+                    .onTapGesture {
+                        showFullScreen = true
+                    }
+            } else {
+                Text("ไม่สามารถโหลดรูปภาพได้")
+                    .foregroundColor(.secondary)
+            }
+        } else {
+            if let videoURL = galleryViewModel.loadVideoURL(from: item) {
+                Group {
+                    if let player = player {
+                        VideoPlayer(player: player)
+                            .frame(height: 300)
+                            .onTapGesture {
+                                showFullScreen = true
+                            }
+                    } else {
+                        ProgressView()
+                            .frame(height: 300)
+                    }
+                }
+                .onAppear {
+                    if player == nil {
+                        player = AVPlayer(url: videoURL)
+                    }
+                }
+            } else {
+                Text("ไม่สามารถโหลดวิดีโอได้")
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+    
+    private var creationDateSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("วันที่สร้าง")
+                .font(.headline)
+            
+            Text(formatDateTime(item.createdAt))
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.7))
+        )
     }
     
     private func formatDateTime(_ date: Date) -> String {

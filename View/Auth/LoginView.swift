@@ -6,9 +6,20 @@ struct LoginView: View {
     @State private var password = ""
     @State private var errorMessage: String?
     @State private var isAuthenticating = false
+    @FocusState private var focusedField: Field?
+    
+    enum Field {
+        case email
+        case password
+    }
     
     var body: some View {
         VStack(spacing: 20) {
+            Image("logo-RodNum")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 150, height: 150)
+            
             Text("Login")
                 .font(.largeTitle)
                 .bold()
@@ -20,6 +31,11 @@ struct LoginView: View {
                 TextField("อีเมล", text: $email)
                     .textFieldStyle(.roundedBorder)
                     .keyboardType(.emailAddress)
+                    .focused($focusedField, equals: .email)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 5)
+                            .stroke(focusedField == .email ? Color(red: 42/255, green: 111/255, blue: 54/255) : Color.clear, lineWidth: 2)
+                    )
             }
             
             VStack(alignment: .leading, spacing: 5) {
@@ -28,6 +44,11 @@ struct LoginView: View {
                     .foregroundColor(.secondary)
                 SecureField("รหัสผ่าน", text: $password)
                     .textFieldStyle(.roundedBorder)
+                    .focused($focusedField, equals: .password)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 5)
+                            .stroke(focusedField == .password ? Color(red: 42/255, green: 111/255, blue: 54/255) : Color.clear, lineWidth: 2)
+                    )
             }
             
             if let error = errorMessage {
@@ -44,17 +65,22 @@ struct LoginView: View {
                 errorMessage = viewModel.login(email: email, password: password)
             }
             .buttonStyle(.borderedProminent)
+            .tint(Color(red: 42/255, green: 111/255, blue: 54/255))
             .disabled(isAuthenticating)
             
-            Button("ยังไม่มีบัญชี? สมัครสมาชิก") {
+            Button("ยังไม่มีบัญชี?") {
                 viewModel.currentScreen = .register
             }
             .font(.caption)
+            .foregroundColor(.black)
             .disabled(isAuthenticating)
         }
-        .padding()
+        .padding(30)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(red: 0.956, green: 0.949, blue: 0.922))
         .onAppear {
             attemptBiometricLogin()
+            UITextField.appearance().tintColor = UIColor(red: 42/255, green: 111/255, blue: 54/255, alpha: 1.0)
         }
     }
     

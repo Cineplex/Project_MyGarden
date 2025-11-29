@@ -14,6 +14,9 @@ struct CreatePlantView: View {
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var plantImage: UIImage?
     
+    private let navBarColor = Color(red: 0x95 / 255.0, green: 0xB1 / 255.0, blue: 0x5D / 255.0)
+    private let backgroundColor = Color(red: 0.956, green: 0.949, blue: 0.922)
+    
     var body: some View {
         NavigationView {
             Form {
@@ -69,13 +72,10 @@ struct CreatePlantView: View {
                     }
                     .padding(.vertical, 4)
                     
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("วันที่ปลูก")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        DatePicker("", selection: $plantingDate, displayedComponents: .date)
-                            .datePickerStyle(.compact)
-                    }
+                    DatePicker("วันที่ปลูก", selection: $plantingDate, displayedComponents: .date)
+                        .datePickerStyle(.compact)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                     .padding(.vertical, 4)
                     
                     VStack(alignment: .leading, spacing: 5) {
@@ -99,6 +99,8 @@ struct CreatePlantView: View {
                         .padding(.horizontal)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(backgroundColor)
             .navigationTitle("สร้างกล่องต้นไม้")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -114,6 +116,9 @@ struct CreatePlantView: View {
                     .disabled(plantName.isEmpty)
                 }
             }
+            .toolbarBackground(navBarColor, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .onChange(of: selectedPhoto) { newItem in
                 Task {
                     if let newItem = newItem {

@@ -6,6 +6,16 @@ struct MyGardenView: View {
     @ObservedObject var authViewModel: AuthViewModel
     @State private var showCreatePlant = false
     
+    private let navBarColor = Color(red: 0x95 / 255.0, green: 0xB1 / 255.0, blue: 0x5D / 255.0)
+    private let backgroundColor = Color(red: 0.956, green: 0.949, blue: 0.922)
+    private var backgroundGradient: LinearGradient {
+        LinearGradient(
+            gradient: Gradient(colors: [backgroundColor, .white]),
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+    
     var userPlants: [Plant] {
         guard let userId = authViewModel.currentUser?.id else { return [] }
         return plantViewModel.getPlants(for: userId)
@@ -14,64 +24,82 @@ struct MyGardenView: View {
     
     var body: some View {
         NavigationView {
-            VStack {
-                if userPlants.isEmpty {
-                    VStack(spacing: 20) {
-                        Spacer()
-                        Text("ขณะนี้ยังไม่มี")
-                            .font(.title2)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                    }
-                } else {
-                    List {
-                        ForEach(userPlants) { plant in
-                            NavigationLink(destination: PlantDetailView(plantViewModel: plantViewModel, reminderViewModel: reminderViewModel, plant: plant)) {
-                                HStack(spacing: 12) {
-                                    // รูปภาพต้นไม้
-                                    if let imagePath = plant.imagePath,
-                                       let image = plantViewModel.loadPlantImage(from: imagePath) {
-                                        Image(uiImage: image)
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(width: 80, height: 80)
-                                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 10)
-                                                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-                                            )
-                                    } else {
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .fill(Color.gray.opacity(0.2))
-                                            .frame(width: 80, height: 80)
-                                            .overlay(
-                                                Image(systemName: "leaf")
-                                                    .font(.system(size: 30))
-                                                    .foregroundColor(.gray)
-                                            )
-                                    }
-                                    
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Text(plant.name)
-                                            .font(.headline)
-                                        
-                                        Text("วันที่ปลูก: \(formatDate(plant.plantingDate))")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                        
-                                        if !plant.additionalDetails.isEmpty {
-                                            Text(plant.additionalDetails)
-                                                .font(.caption)
-                                                .foregroundColor(.secondary)
-                                                .lineLimit(2)
-                                        }
-                                    }
-                                }
-                                .padding(.vertical, 4)
-                            }
+            ZStack {
+                backgroundGradient
+                    .ignoresSafeArea()
+                
+                VStack {
+                    if userPlants.isEmpty {
+                        VStack(spacing: 20) {
+                            Spacer()
+                            Image(systemName: "leaf")
+                                .font(.system(size: 60))
+                                .foregroundColor(.gray)
+                            Text("ยังไม่มีต้นไม้")
+                                .font(.title2)
+                                .foregroundColor(.secondary)
+                            Text("กดปุ่ม + เพื่อสร้างต้นไม้ของคุณ")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Spacer()
                         }
-                        .onDelete { indexSet in
-                            deletePlants(at: indexSet)
+                        .padding()
+                    } else {
+                        ScrollView {
+                            LazyVStack(spacing: 16) {
+                                ForEach(userPlants) { plant in
+                                    NavigationLink(destination: PlantDetailView(plantViewModel: plantViewModel, reminderViewModel: reminderViewModel, plant: plant)) {
+                                        HStack(spacing: 12) {
+                                            if let imagePath = plant.imagePath,
+                                               let image = plantViewModel.loadPlantImage(from: imagePath) {
+                                                Image(uiImage: image)
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(width: 80, height: 80)
+                                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                                    .overlay(
+                                                        RoundedRectangle(cornerRadius: 12)
+                                                            .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                                    )
+                                            } else {
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .fill(Color.gray.opacity(0.2))
+                                                    .frame(width: 80, height: 80)
+                                                    .overlay(
+                                                        Image(systemName: "leaf")
+                                                            .font(.system(size: 30))
+                                                            .foregroundColor(.gray)
+                                                    )
+                                            }
+                                            
+                                            VStack(alignment: .leading, spacing: 8) {
+                                                Text(plant.name)
+                                                    .font(.headline)
+                                                
+                                                Text("วันที่ปลูก: \(formatDate(plant.plantingDate))")
+                                                    .font(.subheadline)
+                                                    .foregroundColor(.secondary)
+                                                
+                                                if !plant.additionalDetails.isEmpty {
+                                                    Text(plant.additionalDetails)
+                                                        .font(.caption)
+                                                        .foregroundColor(.secondary)
+                                                        .lineLimit(2)
+                                                }
+                                            }
+                                            
+                                            Spacer()
+                                        }
+                                        .padding()
+                                        .background(.white.opacity(0.9))
+                                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                                        .shadow(color: Color.black.opacity(0.07), radius: 8, y: 4)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                }
+                            }
+                            .padding(.horizontal)
+                            .padding(.vertical, 20)
                         }
                     }
                 }
@@ -84,14 +112,19 @@ struct MyGardenView: View {
                     }) {
                         Image(systemName: "plus")
                     }
+                    .tint(.white)
                 }
             }
+            .toolbarBackground(navBarColor, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .sheet(isPresented: $showCreatePlant) {
                 if let userId = authViewModel.currentUser?.id {
                     CreatePlantView(plantViewModel: plantViewModel, userId: userId)
                 }
             }
         }
+        .background(backgroundGradient.ignoresSafeArea())
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -101,15 +134,4 @@ struct MyGardenView: View {
         return formatter.string(from: date)
     }
     
-    private func deletePlants(at offsets: IndexSet) {
-        guard let userId = authViewModel.currentUser?.id else { return }
-        let plants = plantViewModel.getPlants(for: userId)
-        for index in offsets {
-            let plant = plants[index]
-            // ลบ reminders ที่เกี่ยวข้องกับต้นไม้ก่อน
-            reminderViewModel.deleteRemindersByPlantId(plant.id)
-            // แล้วค่อยลบต้นไม้
-            plantViewModel.deletePlant(plant)
-        }
-    }
 }
